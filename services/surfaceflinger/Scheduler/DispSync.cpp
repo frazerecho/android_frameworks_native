@@ -540,6 +540,7 @@ void DispSync::resetLocked() {
     mNumResyncSamples = 0;
     mFirstResyncSample = 0;
     mNumResyncSamplesSincePresent = 0;
+    mNumPresentWithoutResyncSamples = 0;
     mThread->unlockModel();
     resetErrorLocked();
 }
@@ -556,6 +557,14 @@ bool DispSync::addPresentFence(const std::shared_ptr<FenceTime>& fenceTime) {
     mNumResyncSamplesSincePresent = 0;
 
     updateErrorLocked();
+
+    if (mNumResyncSamples == 0) {
+        mNumPresentWithoutResyncSamples++;
+        if (mNumPresentWithoutResyncSamples > 8) {
+            mNumPresentWithoutResyncSamples = 0;
+            return false;
+        }
+    }
 
     return !mModelUpdated || mError > kErrorThreshold;
 }
